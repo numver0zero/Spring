@@ -1,0 +1,238 @@
+
+/**
+ * google map api3 > gmap3 를 이용한 map 생성
+ */
+function makeMap(mapConfig){
+
+	var makeData = "";
+	var curLat = "";
+	var curLng = "";
+	var markersData = new Array();
+
+	jQuery.each(jQuery.parseJSON(jQuery("#mapData").html()), function(index,jsonData){
+		if(mapConfig.mode == 'areaHotCoupon'){
+			var goodsOption = '';
+			var imgCnt = Number(jsonData.rowNumber) % 5;
+			if(imgCnt == 0){
+				imgCnt = 5;
+			}
+			for(var i=0;i<jsonData.goodsoption.length;i++){
+				if(jsonData.goodsoption[i].optionSeq == "004"){
+					goodsOption = 'OK캐쉬백 '+ jsonData.goodsoption[i].optionDesc + '%적립';
+				}
+			}
+			if(jsonData.branchTel2 != null){
+				makeData = '<div class="pinLayer">';
+		        if(jsonData.luckyCouponYn != null && jsonData.luckyCouponYn == '10'){
+		        	makeData +='    <span class="pinf">'+String(imgCnt)+'</span>';
+		        }else{
+		        	makeData +='    <span class="pin">'+String(imgCnt)+'</span>';
+		        }
+		        makeData +='    <h4><span>['+jsonData.categoryName+']</span><a style="color:black;" href="/display/couponDetail.oe?couponCode='+jsonData.goodsCode+'#detailTabView_tab01">'+jsonData.entpName+'<br/><span>'+jsonData.goodsName+goodsOption+'</span></a></h4>'+
+		                        '    <div>'+
+		                        '        <address>'+jsonData.cityName+' '+jsonData.guName+' '+jsonData.dongName+' '+jsonData.branchAddr+'</address>'+
+		                        '        <p class="tel"><a href="tel:'+jsonData.branchDdd+''+jsonData.branchTel1+''+jsonData.branchTel2+'">'+jsonData.branchDdd+'-'+jsonData.branchTel1+'-'+jsonData.branchTel2+'</a></p>'+
+		                     //   '        <p class="coupon"><a href="#" onclick="javascript:moveSpotBrand(\''+jsonData.entpCode+'\',\''+jsonData.branchCode+'\');return false;">쿠폰 '+jsonData.goodsCount+'개</a></p>'+
+								'        <button type="button" onclick="javascript:mapCloseEvent();">close</button>'+
+		                        '    </div>'+
+		                        '</div>';
+			} else {
+				makeData = '<div class="pinLayer">';
+		        if(jsonData.luckyCouponYn != null && jsonData.luckyCouponYn == '10'){
+		        	makeData +='    <span class="pinf">'+String(imgCnt)+'</span>';
+		        }else{
+		        	makeData +='    <span class="pin">'+String(imgCnt)+'</span>';
+		        }
+		        makeData +='    <h4><span>['+jsonData.categoryName+']</span><a style="color:black;" href="/display/couponDetail.oe?couponCode='+jsonData.goodsCode+'#detailTabView_tab01">'+jsonData.entpName+'<br/><span>'+jsonData.goodsName+goodsOption+'</span></a></h4>'+
+				                '    <div>'+
+				                '        <address>'+jsonData.cityName+' '+jsonData.guName+' '+jsonData.dongName+' '+jsonData.branchAddr+'</address>'+
+				                '        <p class="tel"><a href="tel:'+jsonData.branchDdd+''+jsonData.branchTel1+'">'+jsonData.branchDdd+'-'+jsonData.branchTel1+'</a></p>'+
+				                '        <p class="coupon"><a href="#" onclick="javascript:moveSpotBrand(\''+jsonData.entpCode+'\',\''+jsonData.branchCode+'\');return false;">쿠폰 '+jsonData.goodsCount+'개</a></p>'+
+							//	'        <button type="button" onclick="javascript:mapCloseEvent();">close</button>'+
+				                '    </div>'+
+				                '</div>';
+			}
+		}else if(mapConfig.mode == 'areaCoupon'){
+			var imgCnt = Number(jsonData.rowNumber) % 5;
+			if(imgCnt == 0){
+				imgCnt = 5;
+			}
+			if(jsonData.luckyCouponYn == '10' || jsonData.luckyCouponYn == '11'){
+				var goodsOption = '';
+				for(var i=0;i<jsonData.goodsoption.length;i++){
+					if(jsonData.goodsoption[i].optionSeq == "004"){
+						goodsOption = 'OK캐쉬백 '+ jsonData.goodsoption[i].optionDesc + '%적립';
+					}
+				}
+				if(jsonData.branchTel2 != null){
+					 makeData = '<div class="pinLayer">';
+				        if(jsonData.luckyCouponYn != null && jsonData.luckyCouponYn == '10'){
+				        	makeData +='    <span class="pinf">'+String(imgCnt)+'</span>';
+				        }else{
+				        	makeData +='    <span class="pin">'+String(imgCnt)+'</span>';
+				        }
+				        makeData +='    <h4><span>['+jsonData.categoryName+']</span><a style="color:black;" href="/display/couponDetail.oe?couponCode='+jsonData.goodsCode+'#detailTabView_tab01">'+jsonData.entpName+'<br/><span>'+jsonData.goodsName+goodsOption+'</span></a></h4>'+
+			                        '    <div>'+
+			                        '        <address>'+jsonData.cityName+' '+jsonData.guName+' '+jsonData.dongName+' '+jsonData.branchAddr+'</address>'+
+			                        '        <p class="tel"><a href="tel:'+jsonData.branchDdd+''+jsonData.branchTel1+''+jsonData.branchTel2+'">'+jsonData.branchDdd+'-'+jsonData.branchTel1+'-'+jsonData.branchTel2+'</a></p>'+
+			                     //   '        <p class="coupon"><a href="#" onclick="javascript:moveSpotBrand(\''+jsonData.entpCode+'\',\''+jsonData.branchCode+'\');return false;">쿠폰 '+jsonData.goodsCount+'개</a></p>'+
+									'        <button type="button" onclick="javascript:mapCloseEvent();">close</button>'+
+			                        '    </div>'+
+			                        '</div>';
+				} else {
+					 makeData = '<div class="pinLayer">';
+				        if(jsonData.luckyCouponYn != null && jsonData.luckyCouponYn == '10'){
+				        	makeData +='    <span class="pinf">'+String(imgCnt)+'</span>';
+				        }else{
+				        	makeData +='    <span class="pin">'+String(imgCnt)+'</span>';
+				        }
+				        makeData +='    <h4><span>['+jsonData.categoryName+']</span><a style="color:black;" href="/display/couponDetail.oe?couponCode='+jsonData.goodsCode+'#detailTabView_tab01">'+jsonData.entpName+'<br/><span>'+jsonData.goodsName+goodsOption+'</span></a></h4>'+
+					                '    <div>'+
+					                '        <address>'+jsonData.cityName+' '+jsonData.guName+' '+jsonData.dongName+' '+jsonData.branchAddr+'</address>'+
+					                '        <p class="tel"><a href="tel:'+jsonData.branchDdd+''+jsonData.branchTel1+'">'+jsonData.branchDdd+'-'+jsonData.branchTel1+'</a></p>'+
+					                '        <p class="coupon"><a href="#" onclick="javascript:moveSpotBrand(\''+jsonData.entpCode+'\',\''+jsonData.branchCode+'\');return false;">쿠폰 '+jsonData.goodsCount+'개</a></p>'+
+								//	'        <button type="button" onclick="javascript:mapCloseEvent();">close</button>'+
+					                '    </div>'+
+					                '</div>';
+				}
+			}else{
+				if(jsonData.branchTel2 != null){
+					 makeData = '<div class="pinLayer">';
+				        if(jsonData.luckyCouponYn != null && jsonData.luckyCouponYn == '10'){
+				        	makeData +='    <span class="pinf">'+String(imgCnt)+'</span>';
+				        }else{
+				        	makeData +='    <span class="pin">'+String(imgCnt)+'</span>';
+				        }
+				        makeData +='    <h4><span>['+jsonData.categoryName+']</span>'+jsonData.entpName+' '+jsonData.branchName+'</h4>'+
+			                        '    <div>'+
+			                        '        <address>'+jsonData.cityName+' '+jsonData.guName+' '+jsonData.dongName+' '+jsonData.branchAddr+'</address>'+
+			                        '        <p class="tel"><a href="tel:'+jsonData.branchDdd+''+jsonData.branchTel1+''+jsonData.branchTel2+'">'+jsonData.branchDdd+'-'+jsonData.branchTel1+'-'+jsonData.branchTel2+'</a></p>'+
+			                        '        <p class="coupon"><a href="#" onclick="javascript:moveSpotBrand(\''+jsonData.entpCode+'\',\''+jsonData.branchCode+'\');return false;">쿠폰 '+jsonData.goodsCount+'개</a></p>'+
+									'        <button type="button" onclick="javascript:mapCloseEvent();">close</button>'+
+			                        '    </div>'+
+			                        '</div>';
+				} else {
+					 makeData = '<div class="pinLayer">';
+				        if(jsonData.luckyCouponYn != null && jsonData.luckyCouponYn == '10'){
+				        	makeData +='    <span class="pinf">'+String(imgCnt)+'</span>';
+				        }else{
+				        	makeData +='    <span class="pin">'+String(imgCnt)+'</span>';
+				        }
+				        makeData +='    <h4><span>['+jsonData.categoryName+']</span>'+jsonData.entpName+' '+jsonData.branchName+'</h4>'+
+					                '    <div>'+
+					                '        <address>'+jsonData.cityName+' '+jsonData.guName+' '+jsonData.dongName+' '+jsonData.branchAddr+'</address>'+
+					                '        <p class="tel"><a href="tel:'+jsonData.branchDdd+''+jsonData.branchTel1+'">'+jsonData.branchDdd+'-'+jsonData.branchTel1+'</a></p>'+
+					                '        <p class="coupon"><a href="#" onclick="javascript:moveSpotBrand(\''+jsonData.entpCode+'\',\''+jsonData.branchCode+'\');return false;">쿠폰 '+jsonData.goodsCount+'개</a></p>'+
+									'        <button type="button" onclick="javascript:mapCloseEvent();">close</button>'+
+					                '    </div>'+
+					                '</div>';
+				}
+			}	
+		}else if(mapConfig.mode == 'branchList'){
+	        makeData = '<div class="pinLayer">'+
+				            '    <span class="pin">1</span>'+
+				            '    <h4><span>['+jsonData.categoryName+']</span>'+jsonData.entpName+' '+jsonData.branchName+'</h4>'+
+				            '    <div>'+
+				            '        <address>'+jsonData.cityName+' '+jsonData.guName+' '+jsonData.dongName+' '+jsonData.branchAddr+'</address>'+
+				            '        <p class="tel"><a href="tel:'+jsonData.branchDdd+''+jsonData.branchTel1+''+jsonData.branchTel2+'">'+jsonData.branchDdd+'-'+jsonData.branchTel1+'-'+jsonData.branchTel2+'</a></p>'+
+							'        <button type="button" onclick="javascript:mapCloseEvent();">close</button>'+
+				            '    </div>'+
+				            '</div>';
+		}else if(mapConfig.mode == 'localbranchList'){
+			var goodsOption = '';
+			for(var i=0;i<jsonData.goodsoption.length;i++){
+				if(jsonData.goodsoption[i].optionSeq == "004"){
+					goodsOption = 'OK캐쉬백 '+ jsonData.goodsoption[i].optionDesc + '%적립';
+				}
+			}
+	        makeData = '<div class="pinLayer">';
+	        if(jsonData.luckyCouponYn != null && jsonData.luckyCouponYn == '10'){
+	        	makeData +='    <span class="pinf">1</span>';
+	        }else{
+	        	makeData +='    <span class="pin">1</span>';
+	        }
+	        makeData +='    <h4><span>['+jsonData.categoryName+']</span>'+jsonData.entpName+'<br/><span>'+jsonData.goodsName+goodsOption+'</span></h4>'+
+				            '    <div>'+
+				            '        <address>'+jsonData.cityName+' '+jsonData.guName+' '+jsonData.dongName+' '+jsonData.branchAddr+'</address>'+
+				            '        <p class="tel"><a href="tel:'+jsonData.branchDdd+''+jsonData.branchTel1+''+jsonData.branchTel2+'">'+jsonData.branchDdd+'-'+jsonData.branchTel1+'-'+jsonData.branchTel2+'</a></p>'+
+							'        <button type="button" onclick="javascript:mapCloseEvent();">close</button>'+
+				            '    </div>'+
+				            '</div>';    
+		}
+		var imgCnt = Number(jsonData.rowNumber) % 5;
+		if(imgCnt == 0){
+			imgCnt = 5;
+		}	
+		if(jsonData.luckyCouponYn != null && jsonData.luckyCouponYn == '10'){
+			markersData[index] = { lat:jsonData.latValue, lng:jsonData.lngValue, data:makeData, options:{ icon:'/images/pin_f'+String(imgCnt)+'.png' } };
+		}else{
+			markersData[index] = { lat:jsonData.latValue, lng:jsonData.lngValue, data:makeData, options:{ icon:'/images/pin_'+String(imgCnt)+'.png' } };
+		}
+		if(index == 0){ curLat = jsonData.latValue; curLng = jsonData.lngValue; }
+	});
+	jQuery('#gMapArea')
+		.gmap3(
+		{ action:'init',
+		  options:{
+		      center:[ curLat, curLng ],
+			  zoom: 14,
+			  streetViewControl: false
+          }
+      	},
+      	{ action: 'addMarkers',
+          markers:markersData,
+          marker:{
+              options:{
+                  draggable: false
+              },
+              events:{
+                  click: function(marker, event, data){
+		  			  var map = jQuery(this).gmap3('get'),
+              				        infowindow = jQuery(this).gmap3({action:'get', name:'infowindow'});
+
+      				  if (infowindow){
+       					  infowindow.open(map, marker);
+        		  		  infowindow.setContent(data);
+      				  } else {
+                          jQuery(this).gmap3(
+						   {action:'addinfowindow',
+						    anchor:marker,
+						    options:{content: data,
+							          disableAutoPan: false,
+									  maxWidth: 0,
+									  pixelOffset: new google.maps.Size(mapConfig.pixelOffsetX, mapConfig.pixelOffsetY),
+									  zIndex: null,
+									  boxStyle: { opacity: 1, width: "280px" },
+									  closeBoxURL: '',
+									  infoBoxClearance: new google.maps.Size(1, 1),
+									  isHidden: false,
+									  pane: "floatPane",
+									  enableEventPropagation: false}
+						   });
+      				  }
+                  }
+              }
+      	  }
+	    }
+    );
+
+	var markers = jQuery('#gMapArea').gmap3({
+		action:'get',
+		name:'marker',
+		all: true
+	});
+
+	if(markers){
+		google.maps.event.trigger(markers[0], 'click');
+	}
+}
+
+/**
+ * infowindow close
+ */
+function mapCloseEvent(){
+    var infowindow = jQuery('#gMapArea').gmap3({action:'get', name:'infowindow'});
+    if (infowindow){
+    	infowindow.close();
+    }
+}

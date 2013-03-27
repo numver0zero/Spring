@@ -1,0 +1,153 @@
+﻿/*
+ * Rich JavaScript framework, (For SK M&C - CLA Project)
+ * On jQuery(version 1.4) & Prototype(version 1.6.1)
+ * Copyright (c) 2010 Lee Won-Gyoon <mail.kido@gmail.com>
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * For details, see the RichScript web site: http://www.richScript.net/
+ * 
+*******************************************************************************/
+
+var richScript = {
+	Version : "Hybrid 1.0 Beta (For SK M&C - OKCasdbag e쿠폰 Project)",
+	lib : {}
+};
+
+/* Add Util Method To String Object */
+Object.extend(String.prototype, {
+	trim : function() {
+		return this
+		.replace(/^\s+/g,"")
+		.replace(/\s+$/g,"");
+	},
+	escapeXml : function() {
+		return this
+		.replace(/&/g,"&amp;")
+		.replace(/\'/g,"&#039;")
+		.replace(/\"/g,"&#34;")
+		.replace(/</g,"&lt;")
+		.replace(/>/g,"&gt;")
+		.replace(/\n/g,"&#10;")
+		.replace(/\r/g,"&#13;")
+		.replace(/\t/g,"&#9;");
+	},
+	escapeJavaScript : function() {
+		return this
+		.replace(/\\/g,"\\\\")
+		.replace(/\//g,"\\/")
+		.replace(/\n/g,"\\n")
+		.replace(/\r/g,"\\r")
+		.replace(/\t/g,"\\t")
+		.replace(/\"/g,"\\\"")
+		.replace(/\'/g,"\\'");
+	},
+	appendParameter : function(_s) {
+		return this + ((_s!=undefined&&_s!="") ? ((this.indexOf("?")>-1)?"&":"?")+_s : "");
+	}
+});
+
+/* Define Request Class */
+richScript.lib.Request = Class.create();
+richScript.lib.Request.prototype = {
+	initialize : function(_query) {
+		var search = (_query!=undefined)?""+_query:"";
+		this.search = "";
+		this.key = {};
+		this.keys = [];
+		this.values = [];
+		this.host = window.location.host;
+		this.port = window.location.port;
+		this.pathname = window.location.pathname;
+		
+		if (search.length>1&&search.indexOf("?")==0) search = search.substring(1,search.length);
+		var param = search.split("&");
+		var paramValue = "";
+		for (var i=0; i<param.length; i++) {
+			var index = param[i].indexOf("=");
+			if (index>-1) {
+				var name = param[i].split("=")[0];
+				var value = param[i].substring(index+1, param[i].length).trim();
+				if (this.key[name]==undefined) {
+					this.set(name, value);
+				}
+			}
+		}
+	},
+	size : function() {
+		return this.values.length;
+	},
+	set : function(_name, _value) {
+		if (this.key[_name]==undefined) {
+			var index = this.values.length;
+			this.key[_name] = index;
+			this.keys.push(_name);
+			this.values.push(_value);
+		}
+		this.search = this.search.appendParameter(_name+"="+_value);
+	},
+	get : function(_name) {
+		var value = this.values[this.key[_name]];
+		if (value==undefined) value = "";
+		return value;
+	},
+	getKey : function(_index) {
+		return this.keys[_index];
+	}
+};
+
+/* Initialize Default Request */
+richScript.request = new richScript.lib.Request(window.location.search);
+
+/* Define Cookies Util */
+richScript.cookie = {
+	get : function(_name) {
+		var list = document.cookie.split(";");
+		var value = "";
+		for (i = 0; i < list.length; i++) {
+			if (list[i].indexOf(_name+"=") > -1) {
+				if (list[i].split("=")[0].replace(/\s/g,"") == _name) {
+					value = decodeURIComponent(list[i].split("=")[1]);
+					break;
+				}
+			}
+		}
+		return value;
+	},
+	set : function(_name, _value, _days, _path, _domain) {
+		if (_name!=undefined&&_name.trim()!="") {
+			if (_value==undefined) _value = "";
+			if (_days==undefined) _days = 365;
+			if (_path==undefined) _path = "/";
+			/* try { if (_domain==undefined) _domain = location.hostname; } catch(e) { } */
+			var d = new Date();
+			d.setDate(d.getDate()+_days);
+			var s = "";
+			s += _name+"="+encodeURIComponent(_value) + ";";
+			s += "expires=" + d.toGMTString() + ";";
+			s += "path=" + _path + ";";
+			if (_domain!=undefined) {
+				s += "domain=" + _domain + ";";
+			}
+			document.cookie = s;
+		}
+	}
+};
+
+/* Printer Object */
+var out = {
+	print : function(_s) {
+		document.write(_s);
+	},
+	println : function(_s) {
+		document.writeln(_s);
+	},
+	printBr : function(_s) {
+		document.writeln(_s+"<br/>");
+	}
+};
+
+var $js = richScript;
+
+
+
+

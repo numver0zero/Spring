@@ -1,0 +1,267 @@
+/* e-coupon javascript, jquery version 1.7.1, createDate 2012-02-17 by suga */
+
+//agent check CSS 차별적용(tab 또는 아이패드인 경우 해상도 1:1로 변경)
+var agent = navigator.userAgent.toLowerCase();
+if (agent.match(/ipad/) != null || agent.match(/shw-m380/) != null) {
+	//2012-04-06 initial-scale 수정
+	document.write('<meta  name="viewport" content="user-scalable=1, minimum-scale=1, maximum-scale=1, initial-scale=1 , width=device-width" />');
+	document.write('<link rel="stylesheet" href="/common/css/landscape.css" media="only screen and (min-device-width : 600px) and (max-device-width : 1024px)" />');
+}else{
+	document.write('<meta  name="viewport" content="user-scalable=1, minimum-scale=0.67, maximum-scale=0.67, initial-scale=0.67 , width=480" />');
+	document.write('<link rel="stylesheet" media="only screen and (min-width : 481px) and (orientation: landscape)" href="/common/css/landscape.css" />');
+}
+
+// 주소창 자동 닫힘
+if(window.attachEvent){
+	window.attachEvent("load", function(){
+		setTimeout(loaded, 100);
+	}, false);
+}
+else{
+	window.addEventListener("load", function(){
+		setTimeout(loaded, 100);
+	}, false);
+}
+/*
+window.addEventListener("load", function(){
+	setTimeout(loaded, 100);
+}, false);
+*/
+function loaded(){
+	window.scrollTo(0, 1);
+}
+
+/* checkbox, radio Image Script */
+(function(jQuery){
+jQuery.fn.ezMark=function(options){options=options||{};var defaultOpt={checkboxCls:options.checkboxCls||'ez-checkbox',radioCls:options.radioCls||'ez-radio',checkedCls:options.checkedCls||'ez-checked',selectedCls:options.selectedCls||'ez-selected',hideCls:'ez-hide'};return this.each(function(){var jQuerythis=jQuery(this);var wrapTag=jQuerythis.attr('type')=='checkbox'?'<div class="'+defaultOpt.checkboxCls+'">':'<div class="'+defaultOpt.radioCls+'">';if(jQuerythis.attr('type')=='checkbox'){jQuerythis.addClass(defaultOpt.hideCls).wrap(wrapTag).change(function(){if(jQuery(this).is(':checked')){jQuery(this).parent().addClass(defaultOpt.checkedCls);}
+	else{jQuery(this).parent().removeClass(defaultOpt.checkedCls);}});if(jQuerythis.is(':checked')){jQuerythis.parent().addClass(defaultOpt.checkedCls);}}
+	else if(jQuerythis.attr('type')=='radio'){jQuerythis.addClass(defaultOpt.hideCls).wrap(wrapTag).change(function(){jQuery('input[name="'+jQuery(this).attr('name')+'"]').each(function(){if(jQuery(this).is(':checked')){jQuery(this).parent().addClass(defaultOpt.selectedCls);}else{jQuery(this).parent().removeClass(defaultOpt.selectedCls);}});});if(jQuerythis.is(':checked')){jQuerythis.parent().addClass(defaultOpt.selectedCls);}}});};
+})(jQuery);
+
+/* checkbox, radio Image Script 적용범위 */
+ jQuery(function(jQuery){
+	jQuery('input[type="checkbox"]').ezMark();
+	jQuery('input[type="radio"]').ezMark();
+ });
+
+//agent check CSS 차별적용
+/*var agent = navigator.userAgent.toLowerCase();
+if (agent.match(/android/) != null) {
+	document.write('<link rel="stylesheet" type="text/css" href="/common/css/android.css"/>');
+}*/
+
+jQuery(document).ready(function(){
+
+	//2012-04-09 top 버튼 셋팅
+	 jQuery('a.top').click(function(){
+		 loaded();
+		 return false;
+	});
+	//2012-04-09 top 버튼 셋팅
+
+	//top menu 레이어 열기
+	jQuery('#wrapper > header .menu').toggle(function(){
+		jQuery(this).addClass('on');
+		jQuery('#wrapper > header').after('<div class="dimmed tmenu"></div>'); //딤드열기
+
+		jQuery('.dimmed').height(jQuery('#wrapper').outerHeight()-71)
+		//클릭펑션 추가 2012-04-02
+		.click(function(){
+			jQuery('#wrapper > header .menu').trigger('click');
+		});
+		//클릭펑션 추가 2012-04-02
+
+		jQuery('#wrapper > header').append('<section class="showMenu"><\/seciton>');
+		jQuery('.showMenu').load("/display/topLayer.oe .topMenu", function(){
+			jQuery('.topMenu button').click(function(){
+				jQuery('header .menu').trigger('click');
+			});
+			jQuery('#wrapper > header .showMenu').append('<img src="/images/common/bg/pointer.png" class="arrow" />');
+		});
+	}, function(){
+		jQuery(this).removeClass('on');
+		jQuery('.showMenu').remove();
+		jQuery('.dimmed').remove();
+	});
+
+	// 메인 클릭이벤트 셋팅
+	/*
+	jQuery('.couponList li').not('.bigBan, .banner, .tit').click(function(){
+		openLayer(jQuery(this).find('dd.thum a:first-child').attr('href'), '.preview');
+		return false;
+	});
+	*/
+
+	//카드포인트조회
+	jQuery('#checkPoint').click(function(){
+		openLayer('/order/retreavePointLayer.oe', '.popLayer');
+		retreaveOCB();
+	});
+
+	//카드번호확인
+	jQuery('#checkCardNum').click(function(){
+		openLayer(jQuery(this).attr('href'), '.popLayer');
+		retreaveOCB();
+		return false;
+	});
+
+	//tab 스크립트 호출
+	if(jQuery('.mycoupon menu.couponTab').length > 0) jQuery('.mycoupon menu.couponTab').ready(function(){ setTabStyle('.mycoupon .couponTab li'); });
+	if(jQuery('.sectionList menu.couponTab').length > 0) jQuery('.sectionList menu.couponTab').ready(function(){ setTabStyle('.sectionList .couponTab li'); });
+	if(jQuery('.detailView menu.detailTab').length > 0) jQuery('.detailView menu.detailTab').ready(function(){ setTabStyle('.detailView .detailTab li'); });
+
+	//2012-04-12 리스트 링크 핸들링 펑션 호출 추가
+	linkList();
+
+});
+
+//tabType
+//=history 관리 관련 수정 - 20120410 by kst
+function setTabStyle(tabEl){
+	jQuery(tabEl).click(function(){
+		//if(jQuery(this).hasClass("on")) return false;
+		jQuery(tabEl+'.on').removeClass('on');
+		jQuery(tabEl+'.onNext').removeClass('onNext');
+		jQuery(this).addClass('on');
+		jQuery(this).next('li').addClass('onNext');
+		var tabId = jQuery(this).attr('id');
+		var tabUrl = jQuery(this).find('a:first-child').attr('href');
+		changeTabPage(tabId, tabUrl, false);
+		return false;
+	});
+}
+
+//tab내 페이지 이동(임시)
+//=history 관리 관련 수정 - 20120410 by kst
+function changeTabPage(tabId, tabUrl, isDirectCall){
+	var makeLocationHash = '';
+	if( !isDirectCall ) isDirectCall = false;
+
+	if(tabUrl.indexOf('detailTabView_') >= 0){
+		makeLocationHash = 'detailTabView_'+tabId;
+	}else{
+		makeLocationHash='tabIdx_'+tabId+ (!isDirectCall ? '' : '?' + tabUrl );
+	}
+
+	if(location.hash == '#'+makeLocationHash){
+		locationHashCall();
+	}else{
+		location.hash=makeLocationHash;
+	}
+}
+
+//2012-04-12 클릭 이벤트 버블링 문제 해결.
+//비슷한 경우의수 다 동일하게 해결가능, 페이지에 직접 onclick 걸지 말고 동적으로 부여하면 버블링 해결가능
+function linkList(){
+	jQuery('.linkList li').bind({
+		click:function(){
+			if(jQuery(this).attr('link')!=null){
+				if(jQuery(this).attr('target')=='tab'){  //target에 따라 적용 스크립트 달라짐.
+					changeTabPage(jQuery(this).attr('id'), jQuery(this).attr('link'), true);
+				}else{
+					location.href=jQuery(this).attr('link');
+				}
+			}
+
+		}
+	});
+	
+	jQuery('select').bind({
+		click: function(e) {
+			e.stopPropagation();
+		}
+	});
+
+}
+
+//=history 관리 관련 수정 - 20120410 by kst
+//레이어 팝업 2012-04-12 스크립트 부분 수정 전체 확인후 수정바람
+function openLayer(url, obj){
+	jQuery('#wrapper').prepend('<div class="loadBox"></div><div class="dimmed"></div>'); //딤드열기
+	jQuery('.dimmed').height(jQuery('#wrapper').outerHeight());
+
+	jQuery('.loadBox').load(url+' '+obj, function(){
+		//input 설정
+		jQuery('.loadBox input[type="checkbox"]').ezMark();// 2012-04-12 수정
+		jQuery('.loadBox input[type="radio"]').ezMark();// 2012-04-12 수정
+
+		//닫기 설정
+		jQuery('button.close, button.cancel, button.notAgree').click(function(){
+			layerClose();
+		});
+		//위치조정
+
+		jQuery('.loadBox').css({
+			'top':30+jQuery(window).scrollTop()
+		});
+	});
+
+	jQuery('.dimmed').click(function(){
+		layerClose();
+	});
+
+	//= make history
+	location.hash='openLayer?url='+url+"^obj="+obj;
+}
+
+//2012-04-02 스크립트 수정
+//=history 관리 관련 수정 - 20120410 by kst
+function layerClose(){
+	history.go(-1);
+}
+
+// FAQ
+function openList(idx){
+	jQuery(idx).toggle(function(){
+		//jQuery(idx+'.on').trigger('click');
+	    jQuery.each(jQuery(idx+'.on'), function(i, val) {
+			jQuery(this).next().hide();
+			jQuery(this).removeClass('on');
+	    });
+		jQuery(this).next().show();
+		jQuery(this).addClass('on');
+		jQuery(document).scrollTop(jQuery(this).offset().top-20);
+
+	},function(){
+		jQuery(this).next().hide();
+		jQuery(this).removeClass('on');
+	});
+}
+
+//마이쿠폰 슬라이드 2012-04-12 스크립트 전체 수정
+function slideShow(){
+	jQuery('head').append('<script type="text/javascript" src="/common/js/jquery.event.drag.min.js"></script>');
+	jQuery('head').append('<script type="text/javascript" src="/common/js/jquery.touchSlider.js"></script>');
+
+	setSlideType('#showCoupon'); //바코드타입
+	setSlideType('#showCoupon2'); // QR이 있는경우
+	setSlideType('#showCoupon3'); //1개만 잇는경우
+
+	//리스트 개수체크 하여 1개만 있는경우 버튼 및 페이징 삭제 스크립트 추가.
+	function setSlideType(idx){
+		var flexibleType = true;
+		var rollType = false;
+		if( jQuery(idx+' ul li').length > 1){
+			jQuery(idx+' ul li').each(function(index){
+				jQuery(idx).next('.btnArea').next('.countList').append('<span>'+(index+1)+'</span>');
+			});
+			flexibleType = true;
+			rollType = true;
+		}else{
+			jQuery(idx).next('.btnArea').next('.countList').remove();
+			jQuery(idx).next('.btnArea').remove();
+		}
+		jQuery(idx).touchSlider({
+			roll : rollType,
+			flexible : flexibleType,
+			view : 1,
+			btn_prev : jQuery(idx).next().find(".prev"),
+			btn_next : jQuery(idx).next().find(".next"),
+			counter : function (e) {
+				jQuery(idx).next('.btnArea').next('.countList').find('span').removeClass('on');
+				jQuery(idx).next('.btnArea').next('.countList').find('span').eq(e.current-1).addClass('on');
+			}
+		});
+	};
+};
+//-->

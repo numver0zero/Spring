@@ -1,0 +1,486 @@
+//=history 관리 관련 수정 - 20120410 by kst
+jQuery(document).ready(function(){
+	//=ajax 호출시 loading
+    jQuery(this).ajaxStart(function() {
+    	jQuery('#loadWindow')
+    	    .css('left', document.body.scrollLeft + (document.body.clientWidth / 2))
+	        .css('top', document.body.scrollTop + (document.body.clientHeight / 2))
+	    	.show();
+    });
+
+	//=ajax 호출 종료시 loading
+	jQuery(this).ajaxComplete(function() {
+		jQuery('#loadWindow').hide();
+    });
+
+	//=로그인시 로그아웃 버튼 처리
+	if(isLogin){
+		jQuery('footer menu li:first-child').html('<a href="#" onclick="javascript:goLogout();">로그아웃</a>');
+	}
+
+	//=history 관리
+	jQuery(window).hashchange( function(){
+		locationHashCall();
+	});
+
+	//=hisotry 관리 이벤트 등록
+	jQuery(window).hashchange();
+
+});
+
+function locationHashCall(){
+	var tabIdx = '';
+	var tabUrl = '';
+	//=layer 처리
+	if( jQuery('.dimmed').length == 0 && location.hash.indexOf('#openLayer') == 0){
+		tabUrl = (location.hash ).substr( ( location.hash ).indexOf( '?' ) + 1 );
+		var splitData = ( tabUrl ).split( '^' );
+		openLayer(splitData[0].substr(4), splitData[1].substr(4));
+	}
+    if(location.hash.indexOf('#openLayer') < 0 && jQuery('.dimmed').length > 0){
+    	jQuery('.dimmed, .loadBox').remove();
+    	return;
+	}
+
+    //=tab 처리 - href
+    if( ( location.hash ).indexOf( '#tabIdx_' ) == 0 ){
+    	if( ( location.hash ).indexOf( '?' ) >= 0 ){
+	    	tabIdx = ( location.hash ).substr( 8, ( location.hash ).indexOf( '?' ) - 8 );
+	    	tabUrl = (location.hash ).substr( ( location.hash ).indexOf( '?' ) + 1 );
+    	}else{
+	    	tabIdx = (location.hash).replace('#tabIdx_','');
+	    	tabUrl = jQuery('#'+tabIdx).find('a:first-child').attr('href');
+    	}
+		jQuery( 'section.tabView' ).load( tabUrl+' .tabBox', function(){
+			makeStyleSet();
+
+			//마이쿠폰페이지일 경우만 실행
+			if( ( tabUrl ).indexOf('OrderView.oe')>0 || ( tabUrl ).indexOf('historyOrder.oe') > 0 ) slideShow();
+
+		});
+		//=tab addclass on
+		tabAddClassOn(tabIdx);
+	//=tab 처리 - onclick
+    }else if( (location.hash).indexOf('#detailTabView_') == 0){
+    	tabIdx = (location.hash).replace('#detailTabView_','');
+    	detailTabView(tabIdx);
+    	//=tab addclass on
+    	tabAddClassOn(tabIdx.substr(0,5));
+    }
+}
+
+//=tab addclass on
+function tabAddClassOn( argTabId){
+	jQuery('#'+argTabId).parent().find('li.on').removeClass('on');
+	jQuery('#'+argTabId).parent().find('lii.onNext').removeClass('onNext');
+	jQuery('#'+argTabId).addClass('on');
+	jQuery('#'+argTabId).next('li').addClass('onNext');
+}
+
+//=로그인 체크
+function isLoginCheck(argUrl){
+	if(!isLogin){
+		if (confirm('로그인 하시겠습니까?')) {
+			goLogin(argUrl);
+		}
+		return false;
+	}
+	return true;
+}
+
+//=주문로그인 체크
+function isLoginForOrder(argUrl){
+	if(!isLogin){
+		if (confirm('e쿠폰 구입을 위해서는 로그인하셔야 합니다.\n\n로그인 하시겠습니까?')) {
+			goLogin(argUrl);
+		}
+		return false;
+	}
+	return true;
+}
+
+function isLoginForOrder2(argUrl){
+	if(!isLogin){
+		if (confirm('이벤트 참여를 위해서는 로그인을 하셔야 합니다. 로그인 하시겠습니까?')) {
+			goLogin(argUrl);
+		}
+		return false;
+	}
+	return true;
+}
+/*
+ * 운영    https://member.okonepass.com/mb/ocb/login/login/PORTAL/
+ * 개발    https://dev.okonepass.com/mb/ocb/login/login/PORTAL/
+ * 테스트  /testlogin/
+ */
+//=원패스 로그인 요청
+function goLogin(argUrl){
+	location.href ='https://member.okonepass.com/mb/ocb/login/login/PICKL/'+getReturnURL(argUrl);
+}
+
+//로그아웃
+function goLogout() {
+	location.href =	'https://member.okonepass.com/ocb/logout/logout/PICKL?returnURL=' + getReturnURL('/index.oe');
+}
+
+//=sns 연동
+function callSns(sTarget, sUri, sDsc, sThumbnail, sTitle) {
+	sUri = Host()+sUri;
+	switch (sTarget) {
+	case 'twitter':
+		window.open('http://twitter.com/share?url=' + encodeURIComponent(sUri) + '&text='
+				+ encodeURIComponent(sDsc), '[OK캐쉬콘]', 'width=600 height=300');
+		break;
+	case 'facebook':
+		window.open('http://www.facebook.com/sharer.php?u=' + encodeURIComponent(sUri), '[OK캐쉬콘]', 'resizable=no width=600 height=300');
+		break;
+	case 'me2day':
+		window.open('http://me2day.net/posts/new?new_post[body]=' + encodeURIComponent(sDsc)
+				+ ' ' + sUri + '&new_post[tags]='+encodeURIComponent('[OK캐쉬콘]'),
+				'[OK캐쉬콘]');
+		break;
+	case 'clog':
+		window.open('http://csp.cyworld.com/bi/bi_m_recommend_pop.php?url=' + encodeURIComponent(sUri) +'&thumbnail='
+	             + encodeURIComponent(sThumbnail) + '&title=' + encodeURIComponent(Base64.encode(sTitle)) + '&summary='
+	             + encodeURIComponent(Base64.encode(sDsc)) + '&writer='+encodeURIComponent('[OK캐쉬콘]')
+	             , '[OK캐쉬콘]', '');
+		break;
+	}
+}
+
+//=페이징 처리 html 생성
+function makePagingHtmlPre(currentPage, rowsPerPage, totalcount ){
+	var endPage = 0;
+	var makeHtmlPre = "";
+	endPage = parseInt(Number(totalcount) / Number(rowsPerPage));
+
+	if((Number(totalcount) % Number(rowsPerPage)) > 0){
+		endPage = Number(endPage) + 1;
+	}
+	if (totalcount > 0) {
+		makeHtmlPre ="<div class='sectionPage'><span><strong>"+parseInt(Number(currentPage) - Number(1))+"</strong> / "+endPage+" page</span></div>";
+	}
+	return makeHtmlPre;
+}
+
+//=페이징 처리 html 생성
+function makePagingHtmlPre2(currentPage, rowsPerPage, totalcount ){
+	var endPage = 0;
+	var makeHtmlPre = "";
+	endPage = parseInt(Number(totalcount) / Number(rowsPerPage));
+
+	if((Number(totalcount) % Number(rowsPerPage)) > 0){
+		endPage = Number(endPage) + 1;
+	}
+	if (totalcount > 0) {
+		makeHtmlPre ="<div class='sectionPage'><span><strong>"+parseInt(Number(currentPage) - Number(1))+"</strong> / "+endPage+" page</span></div>";
+	}
+	return makeHtmlPre;
+}
+
+//=페이징 처리 html 생성
+function makePagingHtml(formName, currentPage, rowsPerPage, totalcount ){
+	var endPage = 0;
+	var makeHtml = '';
+
+	endPage = parseInt(Number(totalcount) / Number(rowsPerPage));
+
+	if((Number(totalcount) % Number(rowsPerPage)) > 0){
+		endPage = Number(endPage) + 1;
+	}
+	if (totalcount > 0) {
+		if(formName != 'couponComment' && formName != 'couponBranch' && formName != 'couponDetailTokTok'){
+			makeHtml ="<div class='morePage2'>";
+		} else {
+			makeHtml ="<div class='morePage'>";
+		}
+        makeHtml = makeHtml + "<p>"+currentPage+"/"+endPage+" page</p>";
+		if (currentPage < endPage){
+			currentPage = Number(currentPage) + 1;
+			makeHtml = makeHtml + "<button onclick=\"javascript:mpaging('"+formName+"', '"+currentPage+"', '"+rowsPerPage+"', '"+totalcount+"');return false;\"><span>더 보기</span></button>";
+        }
+        makeHtml = makeHtml + "</div>";
+	}
+	return makeHtml;
+}
+
+function makeStyleSet(){
+	if(jQuery('input[type="checkbox"], input[type="radio"]').length > 0){
+		//input 설정
+		jQuery('input[type="checkbox"]').ezMark();
+		jQuery('input[type="radio"]').ezMark();
+	}
+
+	if(jQuery('.tabBox').find('dl.openType').length > 0){
+		openList('.openType dt');
+	}
+
+	//2012-04-12 리스트 링크 펑션 호출
+	linkList();
+}
+
+function getReturnURL(argUrl) {
+	var calUrl =  location.href.replace(Host()+"/", "");
+	calUrl = location.href;
+	if(argUrl) calUrl = Host() + argUrl;
+	var ret = "";
+	for ( var i = 0; i < calUrl.length; i++) {
+		ret = ret + toHex(calUrl.charCodeAt(i));
+	}
+	return ret;
+}
+
+//=make link
+function makeLinkStr(argIn){
+	var exp = /[^\'\"](\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+	return argIn.replace(exp,"<a href=\"#\" class=\"important\" onclick=\"javascript:window.open('$1');\" >$1</a>");
+}
+
+//=page move
+function goUrl(argUrl){
+	if(location.href.indexOf(argUrl) >= 0){
+		window.location.reload(true);
+	}else{
+		location.href=argUrl;
+	}
+}
+
+//==================================================
+//==================================================
+
+function Host(){
+	var Dns;
+	Dns=location.href;
+	Dns=Dns.split("//");
+	Dns="http://"+Dns[1].substr(0,Dns[1].indexOf("/"));
+	return Dns;
+}
+
+function toHex(decimal) {
+	var hex = "";
+	var tmp;
+	for (; decimal > 16;) {
+		tmp = decimal % 16;
+		if (tmp > 9) {
+			switch (tmp) {
+			case 10:
+				tmp = "A";
+				break;
+			case 11:
+				tmp = "B";
+				break;
+			case 12:
+				tmp = "C";
+				break;
+			case 13:
+				tmp = "D";
+				break;
+			case 14:
+				tmp = "E";
+				break;
+			case 15:
+				tmp = "F";
+				break;
+			}
+		}
+		hex = tmp + hex;
+		decimal = parseInt(decimal / 16);
+	}
+	hex = decimal + hex;
+
+	return hex;
+}
+
+var Base64 = {
+		// private property
+		_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+		// public method for encoding
+		encode : function (input) {
+			var output = "";
+			var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+			var i = 0;
+
+			input = Base64._utf8_encode(input);
+
+			while (i < input.length) {
+
+				chr1 = input.charCodeAt(i++);
+				chr2 = input.charCodeAt(i++);
+				chr3 = input.charCodeAt(i++);
+
+				enc1 = chr1 >> 2;
+				enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+				enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+				enc4 = chr3 & 63;
+
+				if (isNaN(chr2)) {
+					enc3 = enc4 = 64;
+				} else if (isNaN(chr3)) {
+					enc4 = 64;
+				}
+
+				output = output +
+				this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+				this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+
+			}
+
+			return output;
+		},
+
+		// public method for decoding
+		decode : function (input) {
+			var output = "";
+			var chr1, chr2, chr3;
+			var enc1, enc2, enc3, enc4;
+			var i = 0;
+
+			input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+			while (i < input.length) {
+
+				enc1 = this._keyStr.indexOf(input.charAt(i++));
+				enc2 = this._keyStr.indexOf(input.charAt(i++));
+				enc3 = this._keyStr.indexOf(input.charAt(i++));
+				enc4 = this._keyStr.indexOf(input.charAt(i++));
+
+				chr1 = (enc1 << 2) | (enc2 >> 4);
+				chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+				chr3 = ((enc3 & 3) << 6) | enc4;
+
+				output = output + String.fromCharCode(chr1);
+
+				if (enc3 != 64) {
+					output = output + String.fromCharCode(chr2);
+				}
+				if (enc4 != 64) {
+					output = output + String.fromCharCode(chr3);
+				}
+
+			}
+
+			output = Base64._utf8_decode(output);
+
+			return output;
+
+		},
+
+		// private method for UTF-8 encoding
+		_utf8_encode : function (string) {
+			string = string.replace(/\r\n/g,"\n");
+			var utftext = "";
+
+			for (var n = 0; n < string.length; n++) {
+
+				var c = string.charCodeAt(n);
+
+				if (c < 128) {
+					utftext += String.fromCharCode(c);
+				}
+				else if((c > 127) && (c < 2048)) {
+					utftext += String.fromCharCode((c >> 6) | 192);
+					utftext += String.fromCharCode((c & 63) | 128);
+				}
+				else {
+					utftext += String.fromCharCode((c >> 12) | 224);
+					utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+					utftext += String.fromCharCode((c & 63) | 128);
+				}
+
+			}
+
+			return utftext;
+		},
+
+		// private method for UTF-8 decoding
+		_utf8_decode : function (utftext) {
+			var string = "";
+			var i = 0;
+			var c = c1 = c2 = 0;
+
+			while ( i < utftext.length ) {
+
+				c = utftext.charCodeAt(i);
+
+				if (c < 128) {
+					string += String.fromCharCode(c);
+					i++;
+				}
+				else if((c > 191) && (c < 224)) {
+					c2 = utftext.charCodeAt(i+1);
+					string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+					i += 2;
+				}
+				else {
+					c2 = utftext.charCodeAt(i+1);
+					c3 = utftext.charCodeAt(i+2);
+					string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+					i += 3;
+				}
+
+			}
+
+			return string;
+		}
+	};
+
+/* 쿠키 */
+function getCookie(cookieName) {
+    var cookieList = document.cookie.split(";");
+    var cookieValue = "";
+    for (var i = 0; i < cookieList.length; i++) {
+        if (cookieList[i].indexOf(cookieName+"=") > -1) {
+            if (cookieList[i].split("=")[0].replace(/\s/g,"") == cookieName) {
+            	cookieValue = unescape(cookieList[i].split("=")[1].replace("\"\"", ""));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+//쿠키저장
+//=setCookie("nopop","ok",daytime); //하루동안 쿠키저장
+//=setCookie("nopop","ok"); // 브라우저 창을 닫기 전까지 저장
+//=setCookie("nopop");	// 쿠키삭제
+function setCookie(name,value,expire,path) {
+	path = (!path)?"/":path;
+	var todaydate = new Date();
+	unixtime = todaydate.getTime();
+	if (value==null) {
+		expire = 0;
+	}
+	if (expire != null) {
+		extime = unixtime+(expire*1000);
+		todaydate.setTime(extime);
+		expiretime = " expires=" + todaydate.toUTCString() +";";
+	}else{
+		expiretime = "";
+	}
+	document.cookie = name + "=" + escape(value) + "; path="+path+";"+expiretime;
+}
+
+function URLEncode (clearString) {
+	var output = '';
+	var x = 0;
+	clearString = clearString.toString();
+	var regex = /(^[a-zA-Z0-9_.]*)/;
+	while (x < clearString.length) {
+		var match = regex.exec(clearString.substr(x));
+		if (match != null && match.length > 1 && match[1] != '') {
+			output += match[1];
+			x += match[1].length;
+		} else {
+			if (clearString[x] == ' ')
+				output += '+';
+			else {
+				var charCode = clearString.charCodeAt(x);
+				var hexVal = charCode.toString(16);
+				output += '%' + hexVal.toUpperCase();
+			}
+			x++;
+		}
+		}
+	return output;
+}

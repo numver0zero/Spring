@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+	
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script> 
+	<script src="http://www.prototypejs.org/assets/2007/11/6/prototype.js"></script>
+	<script type="text/javascript"> 
+	
+	//CONTORLLER 를 호출하여 필요한 데이터만 JSON형태로 가져와서 데이터를 조작해야할때..
+	
+	function aaaa(){
+		
+		alert(152830 - Math.round(152830/1.1,100));
+	}
+	
+	function goAjax(){
+		var form = document.form;
+		var tagid = "111951";
+		var tagnm = "스킨케어";
+	
+		 var url= 'http://localhost:8080/ajaxTest.json';
+			
+			new Ajax.Request( url, 
+				{
+				method : "post",
+				parameters : {
+					tagid : tagid,
+					tagnm : tagnm
+				},
+				onSuccess : function(_response) {
+						var _responseText =  _response.responseText;
+						var _jsonObject = eval('(' + _responseText + ')');
+						alert("111");
+						jQuery("#text").val(_jsonObject.TITLE);
+						alert("222");
+				},
+				onFailure : function(_response) {
+					alert("ajax통신실패 : " + _response.responseText);
+				}
+			}); 
+	}
+	
+	//ajax.vm파일에있는 화면을 innerHTML을 사용하여 아래 ID값에 HTML자체를 파싱하여 넣을때 
+	function goAjax2(){
+		var form = document.form;
+		var categoryid = "2";
+		var name = "animation";
+	
+		 var url= 'http://localhost:8080/ajaxTest.html';
+			
+			new Ajax.Request( url, 
+				{
+				method : "post",
+				asynchronous : true,
+				parameters : {
+					categoryid : categoryid,
+					name : name
+				},
+				onSuccess : function(_response) {
+						var _responseText =  _response.responseText;
+					//	var _jsonObject = eval('(' + _responseText + ')');
+						
+						jQuery("#ajaxResult").html(_responseText);
+				},
+				onFailure : function(_response) {
+					alert("ajax통신실패 : " + _response.responseText);
+				}
+			}); 
+	}
+
+	</script>
+</head>
+<body>
+	<form name="form">
+		<div>
+			<table>
+				<tr>
+					<td>
+						<input type="button" value="ajax로데이터가져오기2" onclick="goAjax();">
+						<input type="button" value="ajax로html가져오기" onclick="goAjax2();">
+						<input type="button" value="계산기" onclick="aaaa();">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						ajax결과출력 : <input type="text"  name="text"  id="text" size="15" value="" >
+					</td>
+					<td>
+						<p id="ajaxResult"></p>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</form>
+</body>
+</html>
